@@ -4,8 +4,10 @@ import { useEffect, useState } from "react";
 import db from "@/lib/firebaseClient";
 import { collection, getDocs, deleteDoc, doc } from "firebase/firestore";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { User, Mail, Phone, Briefcase, FileText, Download, Trash2 } from "lucide-react";
+import { User, Mail, Phone, Briefcase, FileText, Download, Trash2, Filter, Calendar, ArrowUpDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
 
 interface JobApplication {
   id: string;
@@ -25,8 +27,15 @@ interface JobApplication {
 // Make sure this is a default export
 const JobApplyPage = () => {
   const [applications, setApplications] = useState<JobApplication[]>([]);
+  const [filteredApplications, setFilteredApplications] = useState<JobApplication[]>([]);
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  
+  // Filter states
+  const [searchTerm, setSearchTerm] = useState("");
+  const [roleFilter, setRoleFilter] = useState("all");
+  const [sortOrder, setSortOrder] = useState<"newest" | "oldest">("newest");
+  const [uniqueRoles, setUniqueRoles] = useState<string[]>([]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -37,7 +46,14 @@ const JobApplyPage = () => {
           ...doc.data(),
         })) as JobApplication[];
 
-        setApplications(data);
+        // Sort by date (newest first by default)
+        const sortedData = sortApplications(data, "newest");
+        setApplications(sortedData);
+        setFilteredApplications(sortedData);
+        
+        // Extract unique roles for filter dropdown
+        const roles = [...new Set(data.map(app => app.role))];
+        setUniqueRoles(roles);
       } catch (error) {
         console.error("Error fetching applications:", error);
       } finally {
@@ -47,6 +63,45 @@ const JobApplyPage = () => {
 
     fetchData();
   }, []);
+
+  // Apply filters whenever searchTerm, roleFilter, or sortOrder changes
+  useEffect(() => {
+    let filtered = [...applications];
+
+    // Apply search filter
+    if (searchTerm) {
+      filtered = filtered.filter(app => 
+        app.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        app.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        app.phone.includes(searchTerm) ||
+        app.role.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    // Apply role filter
+    if (roleFilter !== "all") {
+      filtered = filtered.filter(app => app.role === roleFilter);
+    }
+
+    // Apply sorting
+    filtered = sortApplications(filtered, sortOrder);
+    
+    setFilteredApplications(filtered);
+  }, [searchTerm, roleFilter, sortOrder, applications]);
+
+  // Helper function to sort applications
+  const sortApplications = (apps: JobApplication[], order: "newest" | "oldest") => {
+    return [...apps].sort((a, b) => {
+      const dateA = a.createdAt?.seconds || 0;
+      const dateB = b.createdAt?.seconds || 0;
+      return order === "newest" ? dateB - dateA : dateA - dateB;
+    });
+  };
+
+  // Handle sort toggle
+  const toggleSortOrder = () => {
+    setSortOrder(prev => prev === "newest" ? "oldest" : "newest");
+  };
 
   // Function to handle delete
   const handleDelete = async (id: string) => {
@@ -59,7 +114,8 @@ const JobApplyPage = () => {
       await deleteDoc(doc(db, "jobApplications", id));
       
       // Update state to remove the deleted application
-      setApplications(applications.filter(app => app.id !== id));
+      const updatedApplications = applications.filter(app => app.id !== id);
+      setApplications(updatedApplications);
       
       console.log("Application deleted successfully");
     } catch (error) {
@@ -155,19 +211,96 @@ const JobApplyPage = () => {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Job Applications</h1>
         <div className="text-sm text-gray-500">
-          Total: {applications.length} applications
+          Total: {filteredApplications.length} applications
+          {applications.length !== filteredApplications.length && 
+            ` (filtered from ${applications.length})`}
         </div>
       </div>
+
+      {/* Filters Section */}
+      <div className="mb-6 grid grid-cols-1 md:grid-cols-4 gap-4">
+        {/* Search Input */}
+        <div className="md:col-span-2">
+          <div className="relative">
+            <Input
+              type="text"
+              placeholder="Search by name, email, phone, or role..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 pr-4 py-2 w-full"
+            />
+            <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+          </div>
+        </div>
+
+        {/* Role Filter Dropdown */}
+        <div>
+          <select
+            value={roleFilter}
+            onChange={(e) => setRoleFilter(e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="all">All Roles</option>
+            {uniqueRoles.map(role => (
+              <option key={role} value={role}>{role}</option>
+            ))}
+          </select>
+        </div>
+
+        {/* Sort Button */}
+        <div>
+          <button
+            onClick={toggleSortOrder}
+            className="w-full px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 flex items-center justify-center gap-2 transition-colors"
+          >
+            <Calendar className="w-4 h-4" />
+            <span>{sortOrder === "newest" ? "Newest First" : "Oldest First"}</span>
+            <ArrowUpDown className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+
+      {/* Active Filters Display */}
+      {(searchTerm || roleFilter !== "all") && (
+        <div className="mb-4 flex flex-wrap gap-2">
+          {searchTerm && (
+            <span className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
+              Search: "{searchTerm}"
+              <button
+                onClick={() => setSearchTerm("")}
+                className="ml-1 hover:text-blue-600"
+              >
+                ×
+              </button>
+            </span>
+          )}
+          {roleFilter !== "all" && (
+            <span className="inline-flex items-center gap-1 px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm">
+              Role: {roleFilter}
+              <button
+                onClick={() => setRoleFilter("all")}
+                className="ml-1 hover:text-green-600"
+              >
+                ×
+              </button>
+            </span>
+          )}
+        </div>
+      )}
       
-      {applications.length === 0 ? (
+      {filteredApplications.length === 0 ? (
         <div className="text-center py-12 border-2 border-dashed rounded-lg">
           <FileText className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-gray-700">No applications yet</h3>
-          <p className="text-gray-500">Job applications will appear here once submitted.</p>
+          <h3 className="text-lg font-semibold text-gray-700">No applications found</h3>
+          <p className="text-gray-500">
+            {applications.length === 0 
+              ? "Job applications will appear here once submitted."
+              : "No applications match your current filters."}
+          </p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {applications.map((app) => (
+          {filteredApplications.map((app) => (
             <Card
               key={app.id}
               className="rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all relative"
@@ -193,9 +326,10 @@ const JobApplyPage = () => {
                 </CardTitle>
 
                 {app.createdAt && (
-                  <span className="text-xs text-gray-400">
+                  <div className="flex items-center gap-1 text-xs text-gray-400">
+                    <Calendar className="w-3 h-3" />
                     {new Date(app.createdAt.seconds * 1000).toLocaleString()}
-                  </span>
+                  </div>
                 )}
               </CardHeader>
 

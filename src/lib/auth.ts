@@ -5,4 +5,4 @@ export const validateCredentials = (username: string, password: string): boolean
 export const isAuthenticated = (): boolean => {
   if (typeof window === 'undefined') return false;
   return localStorage.getItem('authenticated') === 'true';
-};
+}; 

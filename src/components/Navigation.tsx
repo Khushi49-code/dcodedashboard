@@ -17,7 +17,7 @@ const tabs = [
   { id: 'connect', label: 'Connect', icon: Mail, path: '/connect' },
   { id: 'blog', label: 'Blog', icon: FileText, path: '/Blog' },
   { id: 'jobs', label: 'Jobs', icon: Briefcase, path: '/job' },
-    { id: 'apply', label: 'Job Apply', icon: Briefcase, path: '/job-apply' },
+  { id: 'apply', label: 'Job Apply', icon: Briefcase, path: '/job-apply' },
 ];
 
 export default function Navigation() {
@@ -59,7 +59,7 @@ export default function Navigation() {
               );
             })}
           </div>
-
+      
           {/* Right Side */}
           <div className="flex items-center gap-2">
             <button
@@ -78,7 +78,7 @@ export default function Navigation() {
             </button>
           </div>
         </div>
-
+ 
         {/* Mobile Menu */}
         {mobileMenuOpen && (
           <div className="md:hidden mt-3 space-y-1">
