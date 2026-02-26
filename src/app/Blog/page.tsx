@@ -359,8 +359,6 @@
 
 
 
-
-
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
@@ -406,7 +404,6 @@ export default function BlogsPage() {
     "Food",
   ];
 
-  // Fix: Properly type the state
   const [blogs, setBlogs] = useState<Blog[]>([]);
   const [filteredBlogs, setFilteredBlogs] = useState<Blog[]>([]);
   const [selectedTag, setSelectedTag] = useState<string>("All");
@@ -428,13 +425,9 @@ export default function BlogsPage() {
     tags: [],
   });
 
-  // FIX: Prevent React Strict Mode double-add
   const addLock = useRef(false);
-
-  // FIX: Prevent fetch duplication
   const fetchLock = useRef(false);
 
-  // -------- FETCH BLOGS --------
   const fetchBlogs = async () => {
     if (fetchLock.current) return;
     fetchLock.current = true;
@@ -461,7 +454,6 @@ export default function BlogsPage() {
     fetchBlogs();
   }, []);
 
-  // FILTER TAGS
   useEffect(() => {
     if (selectedTag === "All") {
       setFilteredBlogs(blogs);
@@ -472,7 +464,6 @@ export default function BlogsPage() {
     }
   }, [selectedTag, blogs]);
 
-  // ----------------- ADD BLOG -----------------
   const handleChange = (field: keyof BlogFormData, value: any) => {
     setForm((prev) => ({ ...prev, [field]: value }));
   };
@@ -498,7 +489,6 @@ export default function BlogsPage() {
     });
   };
 
-  // ----------------- ADD BLOG -----------------
   const addBlog = useCallback(
     async (e: React.FormEvent) => {
       e.preventDefault();
@@ -532,7 +522,6 @@ export default function BlogsPage() {
     [form]
   );
 
-  // ----------------- DELETE BLOG -----------------
   const deleteBlog = async (id: string) => {
     try {
       await deleteDoc(doc(db, "blogs", id));
@@ -542,7 +531,6 @@ export default function BlogsPage() {
     }
   };
 
-  // ----------------- EDIT BLOG -----------------
   const startEdit = (blog: Blog) => {
     setEditingBlogId(blog.id);
     setEditForm({
@@ -599,7 +587,6 @@ export default function BlogsPage() {
     <div className="max-w-4xl mx-auto p-6">
       <h1 className="text-3xl font-bold mb-6">Manage Blogs</h1>
 
-      {/* Add Blog Form */}
       <form onSubmit={addBlog} className="space-y-4 mb-8 p-6 border rounded-lg bg-white">
         <h2 className="text-xl font-semibold mb-4">Add New Blog</h2>
 
@@ -694,7 +681,6 @@ export default function BlogsPage() {
         </button>
       </form>
 
-      {/* Blogs List */}
       <div className="space-y-6">
         <h2 className="text-2xl font-semibold mb-4">
           {selectedTag === "All" ? "All Blogs" : `${selectedTag} Blogs`}
@@ -763,7 +749,6 @@ export default function BlogsPage() {
                 </button>
               </div>
 
-              {/* Inline Edit Form */}
               {editingBlogId === blog.id && (
                 <form onSubmit={updateBlog} className="mt-4 p-4 border rounded-lg bg-gray-50 space-y-3">
                   <h3 className="font-semibold text-lg">Edit Blog</h3>
