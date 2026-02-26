@@ -10,6 +10,7 @@ import {
   doc,
   serverTimestamp,
   updateDoc,
+  Timestamp,
 } from "firebase/firestore";
 
 // Define proper types
@@ -20,7 +21,7 @@ interface Blog {
   links?: Array<{ name: string; url: string }>;
   imageUrl?: string;
   tags?: string[];
-  createdAt?: any;
+  createdAt?: Timestamp;
 }
 
 interface BlogFormData {
@@ -30,6 +31,9 @@ interface BlogFormData {
   imageUrl: string;
   tags: string[];
 }
+
+type LinkField = keyof { name: string; url: string };
+type BlogFormField = keyof BlogFormData;
 
 export default function BlogsPage() {
   const AVAILABLE_TAGS = [
@@ -103,11 +107,11 @@ export default function BlogsPage() {
     }
   }, [selectedTag, blogs]);
 
-  const handleChange = (field: keyof BlogFormData, value: any) => {
+  const handleChange = (field: BlogFormField, value: string | string[] | Array<{ name: string; url: string }>) => {
     setForm((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleLinkChange = (index: number, field: keyof { name: string; url: string }, value: string) => {
+  const handleLinkChange = (index: number, field: LinkField, value: string) => {
     const updated = [...form.links];
     updated[index] = { ...updated[index], [field]: value };
     setForm((prev) => ({ ...prev, links: updated }));
@@ -192,10 +196,11 @@ export default function BlogsPage() {
     });
   };
 
-  const handleEditChange = (field: keyof BlogFormData, value: any) =>
+  const handleEditChange = (field: BlogFormField, value: string | string[] | Array<{ name: string; url: string }>) => {
     setEditForm((prev) => ({ ...prev, [field]: value }));
+  };
 
-  const handleEditLinkChange = (index: number, field: keyof { name: string; url: string }, value: string) => {
+  const handleEditLinkChange = (index: number, field: LinkField, value: string) => {
     const updated = [...editForm.links];
     updated[index] = { ...updated[index], [field]: value };
     setEditForm((prev) => ({ ...prev, links: updated }));
