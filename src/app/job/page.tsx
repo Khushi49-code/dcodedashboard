@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit2, Trash2, ExternalLink, Briefcase, DollarSign, Clock, Save, X, Eye, EyeOff } from 'lucide-react';
+import { Plus, Edit2, Trash2, ExternalLink, Briefcase, DollarSign, Clock, Save, X, Eye, EyeOff } from 'react-icons/lu';
 import { collection, addDoc, getDocs, doc, updateDoc, deleteDoc, orderBy, query, serverTimestamp } from 'firebase/firestore';
 import db from '../../lib/firebaseClient';
 
@@ -14,7 +14,7 @@ type Job = {
   salary?: string;
   skills: string[];
   education: string[];
-  isActive: boolean; // New field to control visibility
+  isActive: boolean;
   createdAt?: { toDate?: () => Date } | Date;
   updatedAt?: { toDate?: () => Date } | Date;
 };
@@ -33,7 +33,7 @@ const JobManagementDashboard = () => {
     salary: '',
     skills: [''],
     education: [''],
-    isActive: true // Default to active when creating new job
+    isActive: true
   });
 
   const fetchJobs = async () => {
@@ -45,7 +45,7 @@ const JobManagementDashboard = () => {
         id: doc.id, 
         skills: [],
         education: [],
-        isActive: true, // Default value if not set
+        isActive: true,
         ...doc.data() 
       }));
       setJobs(jobsData as Job[]);
@@ -77,7 +77,6 @@ const JobManagementDashboard = () => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  // Toggle job visibility
   const toggleJobVisibility = async (jobId: string, currentStatus: boolean) => {
     try {
       setUpdatingVisibility(jobId);
@@ -103,7 +102,6 @@ const JobManagementDashboard = () => {
     }
   };
 
-  // Skills management
   const handleSkillChange = (index: number, value: string) => {
     const newSkills = [...formData.skills];
     newSkills[index] = value;
@@ -121,7 +119,6 @@ const JobManagementDashboard = () => {
     }
   };
 
-  // Education management
   const handleEducationChange = (index: number, value: string) => {
     const newEducation = [...formData.education];
     newEducation[index] = value;
@@ -140,7 +137,6 @@ const JobManagementDashboard = () => {
   };
 
   const handleSubmit = async () => {
-    // Filter out empty skills and education
     const filteredSkills = formData.skills.filter(skill => skill.trim() !== '');
     const filteredEducation = formData.education.filter(degree => degree.trim() !== '');
 
@@ -266,7 +262,8 @@ const JobManagementDashboard = () => {
             <div className="space-y-4">
               {/* Visibility Toggle in Form */}
               <div className="flex items-center space-x-2 mb-2">
-                <div className={`w-12 h-6 flex items-center rounded-full p-1 cursor-pointer ${formData.isActive ? 'bg-green-500' : 'bg-gray-300'}`}
+                <div 
+                  className={`w-12 h-6 flex items-center rounded-full p-1 cursor-pointer ${formData.isActive ? 'bg-green-500' : 'bg-gray-300'}`}
                   onClick={() => setFormData(prev => ({ ...prev, isActive: !prev.isActive }))}
                 >
                   <div className={`bg-white w-4 h-4 rounded-full shadow-md transform duration-300 ${formData.isActive ? 'translate-x-6' : ''}`}></div>
@@ -337,7 +334,7 @@ const JobManagementDashboard = () => {
                       <input
                         value={skill}
                         onChange={(e) => handleSkillChange(index, e.target.value)}
-                        placeholder={`Skill ${index + 1} (optional)`}
+                        placeholder={`Skill ${index + 1}`}
                         className="flex-1 p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                       />
                       {formData.skills.length > 1 && (
@@ -357,7 +354,7 @@ const JobManagementDashboard = () => {
               {/* Education Section */}
               <div>
                 <div className="flex justify-between items-center mb-2">
-                  <h3 className="font-medium text-gray-700">Education Requirements (Optional)</h3>
+                  <h3 className="font-medium text-gray-700">Education Requirements</h3>
                   <button
                     type="button"
                     onClick={addEducationField}
@@ -372,7 +369,7 @@ const JobManagementDashboard = () => {
                       <input
                         value={degree}
                         onChange={(e) => handleEducationChange(index, e.target.value)}
-                        placeholder={`Degree name ${index + 1} (optional)`}
+                        placeholder={`Degree name ${index + 1}`}
                         className="flex-1 p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                       />
                       {formData.education.length > 1 && (
@@ -387,7 +384,9 @@ const JobManagementDashboard = () => {
                     </div>
                   ))}
                 </div>
-                <p className="text-sm text-gray-500 mt-1">Add degree requirements (e.g., "Bachelor's in Computer Science")</p>
+                <p className="text-sm text-gray-500 mt-1">
+                  {"Add degree requirements (e.g., \"Bachelor's in Computer Science\")"}
+                </p>
               </div>
             </div>
 
