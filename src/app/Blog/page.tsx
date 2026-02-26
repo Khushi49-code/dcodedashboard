@@ -348,7 +348,7 @@ export default function BlogsPage() {
               <h2 className="font-semibold text-xl">{blog.title}</h2>
               <p className="text-gray-700">{blog.content}</p>
 
-              {blog.tags?.length > 0 && (
+              {blog.tags && blog.tags.length > 0 && (
                 <div className="flex flex-wrap gap-2">
                   {blog.tags.map((tag, idx) => (
                     <span key={idx} className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm">
@@ -358,7 +358,7 @@ export default function BlogsPage() {
                 </div>
               )}
 
-              {blog.links?.length > 0 && (
+              {blog.links && blog.links.length > 0 && (
                 <div>
                   <h4 className="font-medium mb-1">Related Links</h4>
                   <ul className="space-y-1">
