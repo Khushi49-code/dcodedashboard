@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit2, Trash2, ExternalLink, Briefcase, DollarSign, Clock, Save, X, Eye, EyeOff } from 'react-icons/lu';
+import { Plus, Edit2, Trash2, ExternalLink, Briefcase, DollarSign, Clock, Save, X, Eye, EyeOff } from 'lucide-react';
 import { collection, addDoc, getDocs, doc, updateDoc, deleteDoc, orderBy, query, serverTimestamp } from 'firebase/firestore';
 import db from '../../lib/firebaseClient';
 
