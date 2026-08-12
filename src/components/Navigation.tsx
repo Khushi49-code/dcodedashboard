@@ -17,17 +17,55 @@ const tabs = [
   { id: 'connect', label: 'Connect', icon: Mail, path: '/connect' },
   { id: 'blog', label: 'Blog', icon: FileText, path: '/Blog' },
   { id: 'jobs', label: 'Jobs', icon: Briefcase, path: '/job' },
-    { id: 'apply', label: 'Job Apply', icon: Briefcase, path: '/job-apply' },
+  { id: 'apply', label: 'Job Apply', icon: Briefcase, path: '/job-apply' },
 ];
 
 export default function Navigation() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
 
   const handleLogout = () => {
-    localStorage.removeItem('authenticated');
-    router.push('/login');
+    // Prevent multiple clicks
+    if (isLoggingOut) return;
+    
+    setIsLoggingOut(true);
+    
+    try {
+      // Clear all localStorage items
+      localStorage.clear();
+      
+      // Also remove specific items (just to be safe)
+      localStorage.removeItem('authenticated');
+      localStorage.removeItem('user');
+      localStorage.removeItem('token');
+      localStorage.removeItem('userData');
+      localStorage.removeItem('userDetails');
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('userId');
+      localStorage.removeItem('userRole');
+      
+      // Clear sessionStorage
+      sessionStorage.clear();
+      
+      // Clear cookies
+      document.cookie.split(";").forEach((c) => {
+        document.cookie = c
+          .replace(/^ +/, "")
+          .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+      });
+      
+      // Redirect to login page
+      router.push('/login');
+      
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Even if there's an error, try to redirect
+      router.push('/login');
+    } finally {
+      setIsLoggingOut(false);
+    }
   };
 
   return (
@@ -64,10 +102,15 @@ export default function Navigation() {
           <div className="flex items-center gap-2">
             <button
               onClick={handleLogout}
-              className="hidden sm:flex items-center gap-2 text-slate-600 hover:text-slate-900 px-2 py-1.5 rounded-md hover:bg-slate-100 text-sm"
+              disabled={isLoggingOut}
+              className={`hidden sm:flex items-center gap-2 px-2 py-1.5 rounded-md text-sm transition-colors ${
+                isLoggingOut 
+                  ? 'text-slate-400 cursor-not-allowed' 
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+              }`}
             >
               <LogOut size={16} />
-              Logout
+              {isLoggingOut ? 'Logging out...' : 'Logout'}
             </button>
 
             <button
@@ -105,10 +148,15 @@ export default function Navigation() {
             })}
             <button
               onClick={handleLogout}
-              className="flex items-center gap-2 w-full px-3 py-2 rounded-md text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+              disabled={isLoggingOut}
+              className={`flex items-center gap-2 w-full px-3 py-2 rounded-md text-sm ${
+                isLoggingOut
+                  ? 'text-slate-400 cursor-not-allowed'
+                  : 'text-red-600 hover:text-red-700 hover:bg-red-50'
+              }`}
             >
               <LogOut size={16} />
-              Logout
+              {isLoggingOut ? 'Logging out...' : 'Logout'}
             </button>
           </div>
         )}

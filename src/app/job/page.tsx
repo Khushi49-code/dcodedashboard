@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit2, Trash2, ExternalLink, Briefcase, DollarSign, Clock, Save, X } from 'lucide-react';
+import { Plus, Edit2, Trash2, ExternalLink, Briefcase, DollarSign, Clock, Save, X, Eye, EyeOff } from 'lucide-react';
 import { collection, addDoc, getDocs, doc, updateDoc, deleteDoc, orderBy, query, serverTimestamp } from 'firebase/firestore';
 import db from '../../lib/firebaseClient';
 
@@ -14,6 +14,7 @@ type Job = {
   salary?: string;
   skills: string[];
   education: string[];
+  isActive: boolean; // New field to control visibility
   createdAt?: { toDate?: () => Date } | Date;
   updatedAt?: { toDate?: () => Date } | Date;
 };
@@ -23,6 +24,7 @@ const JobManagementDashboard = () => {
   const [isAddingJob, setIsAddingJob] = useState(false);
   const [editingJob, setEditingJob] = useState<Job | null>(null);
   const [loading, setLoading] = useState(false);
+  const [updatingVisibility, setUpdatingVisibility] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     title: '', 
     experience: '', 
@@ -30,7 +32,8 @@ const JobManagementDashboard = () => {
     link: '', 
     salary: '',
     skills: [''],
-    education: ['']
+    education: [''],
+    isActive: true // Default to active when creating new job
   });
 
   const fetchJobs = async () => {
@@ -42,6 +45,7 @@ const JobManagementDashboard = () => {
         id: doc.id, 
         skills: [],
         education: [],
+        isActive: true, // Default value if not set
         ...doc.data() 
       }));
       setJobs(jobsData as Job[]);
@@ -64,12 +68,39 @@ const JobManagementDashboard = () => {
     link: '', 
     salary: '',
     skills: [''],
-    education: ['']
+    education: [''],
+    isActive: true
   });
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  // Toggle job visibility
+  const toggleJobVisibility = async (jobId: string, currentStatus: boolean) => {
+    try {
+      setUpdatingVisibility(jobId);
+      const newStatus = !currentStatus;
+      
+      await updateDoc(doc(db, 'jobs', jobId), { 
+        isActive: newStatus,
+        updatedAt: serverTimestamp() 
+      });
+      
+      setJobs(prev => prev.map(job => 
+        job.id === jobId 
+          ? { ...job, isActive: newStatus, updatedAt: new Date() } 
+          : job
+      ));
+      
+      console.log(`Job ${newStatus ? 'activated' : 'deactivated'} successfully`);
+    } catch (err) {
+      console.error(err);
+      alert('Failed to update job visibility.');
+    } finally {
+      setUpdatingVisibility(null);
+    }
   };
 
   // Skills management
@@ -90,7 +121,7 @@ const JobManagementDashboard = () => {
     }
   };
 
-  // Education management (simplified to just degree names)
+  // Education management
   const handleEducationChange = (index: number, value: string) => {
     const newEducation = [...formData.education];
     newEducation[index] = value;
@@ -160,7 +191,8 @@ const JobManagementDashboard = () => {
       link: job.link, 
       salary: job.salary || '',
       skills: job.skills && job.skills.length > 0 ? job.skills : [''],
-      education: job.education && job.education.length > 0 ? job.education : ['']
+      education: job.education && job.education.length > 0 ? job.education : [''],
+      isActive: job.isActive !== undefined ? job.isActive : true
     });
     setEditingJob(job);
     setIsAddingJob(true);
@@ -204,6 +236,26 @@ const JobManagementDashboard = () => {
           </button>
         </div>
 
+        {/* Stats Bar */}
+        <div className="grid grid-cols-3 gap-3 mb-4">
+          <div className="bg-white p-3 rounded border shadow-sm text-center">
+            <div className="text-2xl font-bold text-gray-800">{jobs.length}</div>
+            <div className="text-sm text-gray-600">Total Jobs</div>
+          </div>
+          <div className="bg-white p-3 rounded border shadow-sm text-center">
+            <div className="text-2xl font-bold text-green-600">
+              {jobs.filter(job => job.isActive).length}
+            </div>
+            <div className="text-sm text-gray-600">Active Jobs</div>
+          </div>
+          <div className="bg-white p-3 rounded border shadow-sm text-center">
+            <div className="text-2xl font-bold text-gray-400">
+              {jobs.filter(job => !job.isActive).length}
+            </div>
+            <div className="text-sm text-gray-600">Inactive Jobs</div>
+          </div>
+        </div>
+
         {/* Enhanced Form */}
         {isAddingJob && (
           <div className="bg-white p-4 rounded mb-4 border shadow-sm">
@@ -212,6 +264,18 @@ const JobManagementDashboard = () => {
             </h2>
             
             <div className="space-y-4">
+              {/* Visibility Toggle in Form */}
+              <div className="flex items-center space-x-2 mb-2">
+                <div className={`w-12 h-6 flex items-center rounded-full p-1 cursor-pointer ${formData.isActive ? 'bg-green-500' : 'bg-gray-300'}`}
+                  onClick={() => setFormData(prev => ({ ...prev, isActive: !prev.isActive }))}
+                >
+                  <div className={`bg-white w-4 h-4 rounded-full shadow-md transform duration-300 ${formData.isActive ? 'translate-x-6' : ''}`}></div>
+                </div>
+                <span className="text-sm font-medium">
+                  {formData.isActive ? 'Active (Visible to users)' : 'Inactive (Hidden from users)'}
+                </span>
+              </div>
+
               {/* Basic Information */}
               <div>
                 <h3 className="font-medium mb-2 text-gray-700">Basic Information *</h3>
@@ -290,7 +354,7 @@ const JobManagementDashboard = () => {
                 </div>
               </div>
 
-              {/* Education Section - Simplified */}
+              {/* Education Section */}
               <div>
                 <div className="flex justify-between items-center mb-2">
                   <h3 className="font-medium text-gray-700">Education Requirements (Optional)</h3>
@@ -358,10 +422,17 @@ const JobManagementDashboard = () => {
             </div>
           )}
           {!loading && jobs.map(job => (
-            <div key={job.id} className="p-4 border-b hover:bg-gray-50">
+            <div key={job.id} className={`p-4 border-b hover:bg-gray-50 ${!job.isActive ? 'bg-gray-50 opacity-80' : ''}`}>
               <div className="flex justify-between items-start">
                 <div className="flex-1">
-                  <h3 className="font-semibold text-lg text-gray-900">{job.title}</h3>
+                  <div className="flex items-center gap-2 mb-1">
+                    <h3 className={`font-semibold text-lg ${job.isActive ? 'text-gray-900' : 'text-gray-500'}`}>
+                      {job.title}
+                    </h3>
+                    <span className={`text-xs px-2 py-1 rounded ${job.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'}`}>
+                      {job.isActive ? 'Active' : 'Inactive'}
+                    </span>
+                  </div>
                   
                   <div className="flex flex-wrap items-center gap-2 mt-1 text-sm text-gray-600">
                     <span className="flex items-center bg-blue-100 px-2 py-1 rounded">
@@ -376,7 +447,9 @@ const JobManagementDashboard = () => {
                     )}
                   </div>
 
-                  <p className="text-gray-700 mt-2 line-clamp-2">{job.description}</p>
+                  <p className={`mt-2 line-clamp-2 ${job.isActive ? 'text-gray-700' : 'text-gray-500'}`}>
+                    {job.description}
+                  </p>
 
                   {/* Skills Display */}
                   {job.skills && job.skills.length > 0 && job.skills[0] !== '' && (
@@ -384,7 +457,7 @@ const JobManagementDashboard = () => {
                       <span className="text-sm font-medium text-gray-600">Skills:</span>
                       <div className="flex flex-wrap gap-1 mt-1">
                         {job.skills.map((skill, index) => (
-                          <span key={index} className="bg-gray-100 px-2 py-1 rounded text-sm">
+                          <span key={index} className={`px-2 py-1 rounded text-sm ${job.isActive ? 'bg-gray-100' : 'bg-gray-200'}`}>
                             {skill}
                           </span>
                         ))}
@@ -392,13 +465,13 @@ const JobManagementDashboard = () => {
                     </div>
                   )}
 
-                  {/* Education Display - Simplified */}
+                  {/* Education Display */}
                   {job.education && job.education.length > 0 && job.education[0] !== '' && (
                     <div className="mt-2">
                       <span className="text-sm font-medium text-gray-600">Education:</span>
                       <div className="flex flex-wrap gap-1 mt-1">
                         {job.education.map((degree, index) => (
-                          <span key={index} className="bg-purple-100 px-2 py-1 rounded text-sm">
+                          <span key={index} className={`px-2 py-1 rounded text-sm ${job.isActive ? 'bg-purple-100' : 'bg-gray-200'}`}>
                             {degree}
                           </span>
                         ))}
@@ -406,18 +479,36 @@ const JobManagementDashboard = () => {
                     </div>
                   )}
 
-                  <a 
-                    href={job.link} 
-                    target="_blank" 
-                    rel="noopener noreferrer" 
-                    className="inline-flex items-center text-blue-600 hover:underline mt-2"
-                  >
-                    <ExternalLink className="h-3 w-3 mr-1" />
-                    Apply Now
-                  </a>
+                  {job.isActive && (
+                    <a 
+                      href={job.link} 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      className="inline-flex items-center text-blue-600 hover:underline mt-2"
+                    >
+                      <ExternalLink className="h-3 w-3 mr-1" />
+                      Apply Now
+                    </a>
+                  )}
                 </div>
                 
                 <div className="flex space-x-2 ml-4">
+                  {/* Visibility Toggle Button */}
+                  <button 
+                    onClick={() => toggleJobVisibility(job.id, job.isActive)}
+                    disabled={updatingVisibility === job.id}
+                    className={`p-2 rounded ${job.isActive ? 'text-green-600 hover:bg-green-50' : 'text-gray-400 hover:bg-gray-50'}`}
+                    title={job.isActive ? 'Make inactive (hide from users)' : 'Make active (show to users)'}
+                  >
+                    {updatingVisibility === job.id ? (
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-400"></div>
+                    ) : job.isActive ? (
+                      <Eye className="h-4 w-4" />
+                    ) : (
+                      <EyeOff className="h-4 w-4" />
+                    )}
+                  </button>
+                  
                   <button 
                     onClick={() => handleEdit(job)} 
                     className="p-2 text-blue-600 hover:bg-blue-50 rounded"
