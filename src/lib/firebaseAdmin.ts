@@ -3,11 +3,11 @@ import admin from "firebase-admin";
 
 if (!admin.apps.length) {
   try {
-    const privateKey = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n");
+    const privateKey = process.env.FIREBASE_PRIVATE_KEY_2?.replace(/\\n/g, "\n");
 
     const serviceAccount = {
-      projectId: process.env.FIREBASE_PROJECT_ID,
-      clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+      projectId: process.env.FIREBASE_PROJECT_ID_2,
+      clientEmail: process.env.FIREBASE_CLIENT_EMAIL_2,
       privateKey,
     };
 

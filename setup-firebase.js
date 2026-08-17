@@ -36,8 +36,8 @@ if (!serviceAccount.project_id || !serviceAccount.client_email || !serviceAccoun
 
 const privateKeyBase64 = Buffer.from(serviceAccount.private_key, "utf-8").toString("base64");
 
-const envContent = `FIREBASE_PROJECT_ID=${serviceAccount.project_id}
-FIREBASE_CLIENT_EMAIL=${serviceAccount.client_email}
+const envContent = `FIREBASE_PROJECT_ID_2=${serviceAccount.project_id}
+FIREBASE_CLIENT_EMAIL_2=${serviceAccount.client_email}
 FIREBASE_PRIVATE_KEY_BASE64=${privateKeyBase64}
 `;
 
