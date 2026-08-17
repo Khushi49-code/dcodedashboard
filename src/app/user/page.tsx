@@ -1,10 +1,29 @@
 "use client";
 import React, { useEffect, useState } from "react";
+import Image from "next/image";
+
+type FirebaseUser = {
+  uid: string;
+  email: string | null;
+  displayName: string | null;
+  photoURL: string | null;
+  emailVerified: boolean;
+  disabled: boolean;
+  creationTime: string;
+  lastSignInTime: string | null;
+  providerData: {
+    providerId: string;
+    uid: string;
+    email: string | null;
+    displayName: string | null;
+    photoURL: string | null;
+  }[];
+};
 
 const UsersPage = () => {
-  const [users, setUsers] = useState([]);
+  const [users, setUsers] = useState<FirebaseUser[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -12,7 +31,7 @@ const UsersPage = () => {
         setLoading(true);
         const res = await fetch("/api/users");
         const data = await res.json();
-        
+
         if (data.success) {
           setUsers(data.users);
         } else {
@@ -25,7 +44,7 @@ const UsersPage = () => {
         setLoading(false);
       }
     };
-    
+
     fetchUsers();
   }, []);
 
@@ -59,15 +78,17 @@ const UsersPage = () => {
         <h1 className="text-2xl font-bold mb-2">Firebase Users</h1>
         <p className="text-gray-600">Total Users: {users.length}</p>
       </div>
-      
+
       <div className="grid gap-4">
         {users.map((user) => (
           <div key={user.uid} className="border border-gray-200 p-4 rounded-lg shadow-sm">
             <div className="flex items-start gap-4">
               {user.photoURL ? (
-                <img
+                <Image
                   src={user.photoURL}
                   alt={user.displayName || "User"}
+                  width={64}
+                  height={64}
                   className="w-16 h-16 rounded-full object-cover"
                 />
               ) : (
@@ -75,7 +96,7 @@ const UsersPage = () => {
                   👤
                 </div>
               )}
-              
+
               <div className="flex-1">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
                   <div>
@@ -85,7 +106,7 @@ const UsersPage = () => {
                     <strong>Email:</strong> {user.email || "N/A"}
                   </div>
                   <div>
-                    <strong>UID:</strong> 
+                    <strong>UID:</strong>
                     <span className="font-mono text-xs ml-1">{user.uid}</span>
                   </div>
                   <div>
@@ -98,10 +119,11 @@ const UsersPage = () => {
                     <strong>Created:</strong> {new Date(user.creationTime).toLocaleDateString()}
                   </div>
                   <div>
-                    <strong>Last Sign In:</strong> {user.lastSignInTime ? new Date(user.lastSignInTime).toLocaleDateString() : "Never"}
+                    <strong>Last Sign In:</strong>{" "}
+                    {user.lastSignInTime ? new Date(user.lastSignInTime).toLocaleDateString() : "Never"}
                   </div>
                   <div>
-                    <strong>Providers:</strong> {user.providerData.map(p => p.providerId).join(", ")}
+                    <strong>Providers:</strong> {user.providerData.map((p) => p.providerId).join(", ")}
                   </div>
                 </div>
               </div>

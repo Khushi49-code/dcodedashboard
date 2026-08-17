@@ -41,14 +41,23 @@ const JobManagementDashboard = () => {
       setLoading(true);
       const q = query(collection(db, 'jobs'), orderBy('createdAt', 'desc'));
       const snapshot = await getDocs(q);
-      const jobsData = snapshot.docs.map(doc => ({ 
-        id: doc.id, 
-        skills: [],
-        education: [],
-        isActive: true, // Default value if not set
-        ...doc.data() 
-      }));
-      setJobs(jobsData as Job[]);
+      const jobsData: Job[] = snapshot.docs.map(docSnap => {
+        const data = docSnap.data() as Partial<Job>;
+        return {
+          id: docSnap.id,
+          title: data.title ?? '',
+          experience: data.experience ?? '',
+          description: data.description ?? '',
+          link: data.link ?? '',
+          salary: data.salary,
+          skills: data.skills ?? [],
+          education: data.education ?? [],
+          isActive: data.isActive ?? true,
+          createdAt: data.createdAt,
+          updatedAt: data.updatedAt,
+        };
+      });
+      setJobs(jobsData);
     } catch (err) {
       console.error(err);
       alert('Failed to fetch jobs.');
@@ -387,7 +396,7 @@ const JobManagementDashboard = () => {
                     </div>
                   ))}
                 </div>
-                <p className="text-sm text-gray-500 mt-1">Add degree requirements (e.g., "Bachelor's in Computer Science")</p>
+                <p className="text-sm text-gray-500 mt-1">Add degree requirements (e.g., &quot;Bachelor&apos;s in Computer Science&quot;)</p>
               </div>
             </div>
 

@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import {
-  Users,
+  // Users, // Removed - not used
   Mail,
   FileText,
   Briefcase,

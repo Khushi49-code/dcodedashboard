@@ -15,7 +15,6 @@
 
 
 
-// app/api/users/route.js
 import { NextResponse } from "next/server";
 import { authAdmin } from "@/lib/firebaseAdmin";
 
@@ -53,11 +52,13 @@ export async function GET() {
   } catch (error) {
     console.error("Error fetching users:", error);
     
+    const message = error instanceof Error ? error.message : "Unknown error";
+
     return NextResponse.json(
       { 
         success: false,
         error: "Failed to fetch users",
-        details: error.message 
+        details: message
       }, 
       { status: 500 }
     );
